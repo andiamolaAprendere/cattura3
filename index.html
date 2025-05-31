@@ -85,7 +85,7 @@
                 const img = contentDiv.querySelector('.static-image');
                 if (img) {
                     img.onload = () => console.log("Immagine statica caricata con successo");
-                    img.onerror = () => console.log("Errore nel caricamento dell'immagine statica");
+                    img.onerror = () => console.log("Errore nel caricamento dell'immagine statica. Controlla i permessi su Google Drive.");
                 }
             }
         }
