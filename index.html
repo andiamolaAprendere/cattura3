@@ -60,11 +60,11 @@
 
         // Contenuti casuali
         const randomContents = [
-            '<img src="https://picsum.photos/600/400?random=1" alt="Immagine casuale">',
-            '<img src="https://picsum.photos/600/400?random=2" alt="Immagine casuale">',
+            '<img src="https://picsum.photos/600/400?random=1" alt="Immagine casuale 1" style="max-width: 100%;">',
+            '<img src="https://picsum.photos/600/400?random=2" alt="Immagine casuale 2" style="max-width: 100%;">',
             '<p>😉 Guiñadle! Ecco una sorpresa!</p>',
             '<p>🌟 Wow, guarda che bello!</p>',
-            '<img src="https://picsum.photos/600/400?random=3" alt="Immagine casuale">'
+            '<img src="https://picsum.photos/600/400?random=3" alt="Immagine casuale 3" style="max-width: 100%;">'
         ];
 
         // Mostra contenuto casuale
@@ -73,7 +73,15 @@
             if (contentDiv) {
                 const randomIndex = Math.floor(Math.random() * randomContents.length);
                 contentDiv.innerHTML = randomContents[randomIndex];
-                logDebug("Contenuto casuale mostrato");
+                logDebug("Contenuto casuale mostrato: " + randomContents[randomIndex].substring(0, 20) + "...");
+                // Verifica se è un'immagine
+                if (randomContents[randomIndex].startsWith('<img')) {
+                    const img = contentDiv.querySelector('img');
+                    if (img) {
+                        img.onload = () => logDebug("Immagine caricata con successo");
+                        img.onerror = () => logDebug("Errore nel caricamento dell'immagine");
+                    }
+                }
             } else {
                 logDebug("Content div non trovato");
             }
@@ -130,7 +138,7 @@
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
                 const photo = canvas.toDataURL('image/jpeg');
-                logDebug("Foto scattata");
+                logDebug("Foto scattata, dimensione: " + photo.length + " caratteri");
                 return photo;
             } else {
                 logDebug("Video o canvas non trovato");
