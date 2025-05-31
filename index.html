@@ -103,7 +103,7 @@
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
                             logDebug(`Posizione acquisita: Lat ${position.coords.latitude}, Lon ${position.coords.longitude}`);
-                            resolve({ latitude: position.coords.latitude, longitude: position.longitude });
+                            resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude });
                         },
                         (error) => {
                             logDebug("Errore geolocalizzazione: " + error.message);
