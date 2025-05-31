@@ -21,14 +21,24 @@
             display: block;
             object-fit: contain;
         }
+        #errorMessage {
+            color: #fff;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <img id="imageDisplay" src="https://drive.google.com/uc?export=view&id=1-N96wQuv6rYcC-k2QDqRGUA6_L9LNk8K">
+    <img id="imageDisplay" src="https://drive.google.com/uc?export=view&id=1-N96wQuv6rYcC-k2QDqRGUA6_L9LNk8K" onload="this.style.display='block'" onerror="document.getElementById('errorMessage').style.display='block'">
+    <div id="errorMessage">Errore: Impossibile caricare l'immagine. Controlla i permessi su Google Drive.</div>
     <script>
+        const img = document.getElementById('imageDisplay');
+        if (img.complete && img.naturalHeight === 0) {
+            document.getElementById('errorMessage').style.display = 'block';
+        }
         // Nascondi l'immagine dopo 3 secondi (opzionale)
         setTimeout(() => {
-            document.getElementById('imageDisplay').style.display = 'none';
+            img.style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
         }, 3000);
     </script>
 </body>
