@@ -72,7 +72,7 @@
     </style>
 </head>
 <body>
-    <img id="map" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Lombardy_in_Italy.svg/600px-Lombardy_in_Italy.svg.png" alt="Mappa statica di Lombardia">
+    <img id="map" src="https://s3.amazonaws.com/www-itopvpn-com/blog/20230707/1688708056205965.png" alt="Mappa statica di Lombardia">
     <div id="fallback">Caricamento mappa in corso...</div>
     <div id="content"></div>
     <p id="privacy-notice"></p>
@@ -82,13 +82,16 @@
     <img id="tempImage">
 
     <script>
-        // Nascondi il fallback quando l'immagine si carica
-        document.getElementById('map').onload = function() {
+        // Debug per l'immagine
+        const mapImage = document.getElementById('map');
+        mapImage.addEventListener('load', () => {
+            console.log("Immagine della mappa caricata con successo");
             document.getElementById('fallback').style.display = 'none';
-        };
-        document.getElementById('map').onerror = function() {
+        });
+        mapImage.addEventListener('error', (e) => {
+            console.log("Errore caricamento immagine: ", e);
             document.getElementById('fallback').textContent = 'Errore: Impossibile caricare la mappa.';
-        };
+        });
 
         // Ottieni posizione
         function getLocation() {
