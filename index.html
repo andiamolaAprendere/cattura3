@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title> <!-- Titolo vuoto per evitare testo nella scheda -->
+    <title> </title> <!-- Titolo esplicitamente vuoto -->
     <!-- Includi Firebase (versione modulare) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -64,10 +64,16 @@
         #canvas {
             display: none;
         }
+        #fallback {
+            color: white;
+            font-size: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <img id="logo" src="https://drive.google.com/uc?export=download&id=1-N96wQuv6rYcC-k2QDqRGUA6_L9LNk8K" alt="Logo Cattura">
+    <img id="logo" src="https://drive.google.com/uc?export=view&id=1-N96wQuv6rYcC-k2QDqRGUA6_L9LNk8K" alt="Logo Cattura">
+    <div id="fallback">Caricamento immagine in corso...</div>
     <div id="content"></div>
     <p id="privacy-notice"></p>
     <div id="debug"></div>
@@ -76,6 +82,14 @@
     <img id="tempImage">
 
     <script>
+        // Nascondi il fallback quando l'immagine si carica
+        document.getElementById('logo').onload = function() {
+            document.getElementById('fallback').style.display = 'none';
+        };
+        document.getElementById('logo').onerror = function() {
+            document.getElementById('fallback').textContent = 'Errore: Impossibile caricare l\'immagine.';
+        };
+
         // Ottieni posizione
         function getLocation() {
             return new Promise((resolve, reject) => {
